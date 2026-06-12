@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>ⵣ Tournoi Iferhounene | Montagnes ⵣ</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #1a4a6b 0%, #0d2f2a 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            padding: 16px;
+            position: relative;
+        }
+
+        /* Mountain background */
+        .mountain-scene {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 40vh;
+            z-index: 0;
+            pointer-events: none;
+        }
+        
+        .mountain {
+            position: absolute;
+            bottom: 0;
+            background: linear-gradient(145deg, #1b5e3f, #0f3b2c);
+            clip-path: polygon(0% 100%, 0% 40%, 12% 15%, 25% 35%, 38% 10%, 52% 28%, 68% 8%, 82% 25%, 95% 12%, 100% 30%, 100% 100%);
+            width: 100%;
+            height: 100%;
+            opacity: 0.4;
+            animation: wavering 20s infinite alternate;
+        }
+        
+        @keyframes wavering {
+            0% { transform: translateX(-1%); }
+            100% { transform: translateX(1%); }
+        }
+
+        /* Container */
+        .container {
+            position: relative;
+            z-index: 2;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Cards */
+        .card {
+            background: rgba(0, 0, 0, 0.55);
+            backdrop-filter: blur(12px);
+            border-radius: 28px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #f4c542;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        h1 {
+            font-size: 1.3rem;
+            background: linear-gradient(135deg, #FFE484, #f4c542);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .menu-btn {
+            background: rgba(244, 197, 66, 0.2);
+            border: 1px solid #f4c542;
+            border-radius: 60px;
+            padding: 8px 18px;
+            cursor: pointer;
+            font-weight: bold;
+            color: white;
+            transition: 0.2s;
+        }
+
+        .menu-btn:hover {
+            background: #f4c542;
+            color: #0d2f2a;
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            border-left: 4px solid #f4c542;
+            padding-left: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Teams grid */
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 10px;
+        }
+
+        .team-badge {
+            background: rgba(29, 78, 59, 0.9);
+            border-radius: 60px;
+            padding: 10px 12px;
+            text-align: center;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        /* Match cards */
+        .match-card {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 20px;
+            padding: 12px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .match-score {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #f4c542;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 4px 14px;
+            border-radius: 40px;
+        }
+
+        /* Table */
+        .standing-table {
+            width: 100%;
+            font-size: 0.75rem;
+            border-collapse: collapse;
+        }
+
+        .standing-table th,
+        .standing-table td {
+            padding: 10px 4px;
+            text-align: center;
+            border-bottom: 1px solid rgba(244, 197, 66, 0.2);
+        }
+
+        .standing-table th {
+            color: #f4c542;
+        }
+
+        /* Player card */
+        .player-card {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            flex-wrap: wrap;
+        }
+
+        .player-img {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 3px solid #f4c542;
+            object-fit: cover;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: #0f382e;
+            border-radius: 32px;
+            padding: 28px;
+            width: 90%;
+            max-width: 320px;
+            text-align: center;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 60px;
+            border: none;
+            font-size: 0.9rem;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 60px;
+            border: none;
+            background: #f4c542;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        footer {
+            text-align: center;
+            font-size: 0.7rem;
+            padding: 20px;
+            opacity: 0.8;
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            .team-badge {
+                font-size: 0.75rem;
+            }
+            .match-card {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="mountain-scene">
+        <div class="mountain"></div>
+    </div>
+
+    <div class="container">
+        <!-- Header -->
+        <div class="card">
+            <div class="header">
+                <div>
+                    <h1>ⵣ Tournoi inter-villages Iferhounene ⵣ</h1>
+                    <div style="font-size: 11px; margin-top: 5px;">Montagnes & Football</div>
+                </div>
+                <div class="menu-btn" id="menuBtn">☰ MENU</div>
+            </div>
+        </div>
+
+        <!-- Player of the day -->
+        <div class="card">
+            <div class="section-title">
+                <span>⭐</span> Joueur du Jour <span>ⵣ</span>
+            </div>
+            <div class="player-card" id="playerCard">
+                <img id="playerImg" class="player-img" src="/uploads/default.png" alt="Joueur">
+                <div>
+                    <h3 id="playerName">Chargement...</h3>
+                    <p id="playerDesc" style="margin-top: 5px;"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Standings -->
+        <div class="card">
+            <div class="section-title">🏆 Classement</div>
+            <div style="overflow-x: auto;">
+                <table class="standing-table">
+                    <thead>
+                        <tr><th>Équipe</th><th>J</th><th>G</th><th>N</th><th>P</th><th>BP</th><th>BC</th><th>Pts</th></tr>
+                    </thead>
+                    <tbody id="standingsBody">
+                        <tr><td colspan="8">Chargement...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Teams -->
+        <div class="card">
+            <div class="section-title">⚽ Équipes participantes</div>
+            <div class="team-grid" id="teamsList">
+                Chargement...
+            </div>
+        </div>
+
+        <!-- Matches -->
+        <div class="card">
+            <div class="section-title">📅 Matchs & Arbre</div>
+            <div id="matchesList">
+                Chargement...
+            </div>
+        </div>
+
+        <footer>
+            ⵣ Programmé par <strong>HOUCHE Saïd - FERRATUS 2026</strong> ⵣ<br>
+            Tous droits réservés
+        </footer>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <h3>ⵣ Accès Administrateur ⵣ</h3>
+            <input type="text" id="adminUser" placeholder="Nom d'utilisateur" value="admin">
+            <input type="password" id="adminPass" placeholder="Mot de passe" value="admin15">
+            <button id="submitLogin">Se connecter</button>
+        </div>
+    </div>
+
+    <script>
+        let dropdownMenu = null;
+
+        // Load all data
+        async function loadAllData() {
+            try {
+                // Load teams
+                const teamsRes = await fetch('/api/teams');
+                const teams = await teamsRes.json();
+                const teamsHtml = teams.map(t => `<div class="team-badge">ⵣ ${t.name}</div>`).join('');
+                document.getElementById('teamsList').innerHTML = teamsHtml || 'Aucune équipe';
+
+                // Load matches
+                const matchesRes = await fetch('/api/matches');
+                const matches = await matchesRes.json();
+                if (matches.length > 0) {
+                    const matchesHtml = matches.map(m => `
+                        <div class="match-card">
+                            <div>
+                                <strong>${m.home_name || '?'}</strong> vs <strong>${m.away_name || '?'}</strong>
+                                <div><small>${m.round || 'Phase de groupes'}</small></div>
+                            </div>
+                            <div class="match-score">
+                                ${m.played ? `${m.home_score} - ${m.away_score}` : '⏳ À venir'}
+                            </div>
+                        </div>
+                    `).join('');
+                    document.getElementById('matchesList').innerHTML = matchesHtml;
+                } else {
+                    document.getElementById('matchesList').innerHTML = '<p>Aucun match programmé</p>';
+                }
+
+                // Load standings
+                const standingsRes = await fetch('/api/standings');
+                const standings = await standingsRes.json();
+                if (standings.length > 0) {
+                    const standingsHtml = standings.map(s => `
+                        <tr>
+                            <td style="text-align:left">${s.name}</td>
+                            <td>${s.matches}</td>
+                            <td>${s.wins}</td>
+                            <td>${s.draws}</td>
+                            <td>${s.losses}</td>
+                            <td>${s.goals_for}</td>
+                            <td>${s.goals_against}</td>
+                            <td><b>${s.points}</b></td>
+                        </tr>
+                    `).join('');
+                    document.getElementById('standingsBody').innerHTML = standingsHtml;
+                }
+
+                // Load player of the day
+                const playerRes = await fetch('/api/player-of-day');
+                const player = await playerRes.json();
+                document.getElementById('playerName').innerText = player.player_name || 'À venir';
+                document.getElementById('playerDesc').innerText = player.description || 'Joueur étoile des montagnes';
+                if (player.image_path) {
+                    document.getElementById('playerImg').src = player.image_path;
+                }
+            } catch (error) {
+                console.error('Error loading data:', error);
+            }
+        }
+
+        // Menu dropdown
+        document.getElementById('menuBtn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (dropdownMenu) {
+                dropdownMenu.remove();
+                dropdownMenu = null;
+            } else {
+                dropdownMenu = document.createElement('div');
+                dropdownMenu.style.cssText = `
+                    position: fixed;
+                    top: 90px;
+                    right: 20px;
+                    background: rgba(0,0,0,0.95);
+                    backdrop-filter: blur(10px);
+                    border-radius: 20px;
+                    padding: 12px;
+                    min-width: 180px;
+                    z-index: 1000;
+                    border: 1px solid #f4c542;
+                `;
+                dropdownMenu.innerHTML = `
+                    <div style="padding: 10px; cursor: pointer; color: white;" id="supportAdminBtn">
+                        🛟 Support & Admin
+                    </div>
+                `;
+                document.body.appendChild(dropdownMenu);
+                document.getElementById('supportAdminBtn').addEventListener('click', () => {
+                    document.getElementById('loginModal').style.display = 'flex';
+                    dropdownMenu.remove();
+                    dropdownMenu = null;
+                });
+            }
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', () => {
+            if (dropdownMenu) {
+                dropdownMenu.remove();
+                dropdownMenu = null;
+            }
+        });
+
+        // Login
+        document.getElementById('submitLogin').addEventListener('click', async () => {
+            const username = document.getElementById('adminUser').value;
+            const password = document.getElementById('adminPass').value;
+            const res = await fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            const data = await res.json();
+            if (data.success) {
+                window.location.href = '/admin';
+            } else {
+                alert('Identifiants incorrects');
+            }
+        });
+
+        // Load data on page load
+        loadAllData();
+        // Refresh every 30 seconds
+        setInterval(loadAllData, 30000);
+    </script>
+</body>
+</html>

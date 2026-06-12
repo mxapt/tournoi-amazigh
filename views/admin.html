@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Administration ⵣ Tournoi Iferhounene</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: linear-gradient(135deg, #1a4a6b 0%, #0d2f2a 100%);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            padding: 16px;
+            min-height: 100vh;
+        }
+        .admin-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .card {
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(12px);
+            border-radius: 28px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #f4c542;
+        }
+        h1, h2 {
+            color: #f4c542;
+            margin-bottom: 16px;
+        }
+        h2 {
+            border-left: 4px solid #f4c542;
+            padding-left: 12px;
+            font-size: 1.3rem;
+        }
+        input, select, button {
+            margin: 8px;
+            padding: 10px 16px;
+            border-radius: 60px;
+            border: none;
+            font-size: 0.9rem;
+        }
+        button {
+            background: #f4c542;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        button:hover {
+            background: #ffd700;
+            transform: scale(1.02);
+        }
+        .team-item, .match-item {
+            background: rgba(29, 78, 59, 0.8);
+            border-radius: 40px;
+            padding: 12px 16px;
+            margin: 10px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .match-item {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .delete-btn {
+            background: #c13b2b;
+            color: white;
+        }
+        .header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        @media (max-width: 600px) {
+            body { padding: 10px; }
+            input, select, button { width: 100%; margin: 5px 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <div class="header-bar">
+            <h1>ⵣ Panneau d'Administration ⵣ</h1>
+            <button id="logoutBtn" style="background: #c13b2b; color: white;">Déconnexion</button>
+        </div>
+
+        <!-- Gestion des équipes -->
+        <div class="card">
+            <h2>➕ Gestion des équipes</h2>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <input type="text" id="newTeamName" placeholder="Nom de l'équipe" style="flex: 1;">
+                <button id="addTeamBtn">Ajouter l'équipe</button>
+            </div>
+            <div id="teamsList"></div>
+        </div>
+
+        <!-- Création de match -->
+        <div class="card">
+            <h2>🏅 Créer un match</h2>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <select id="homeTeamSelect" style="flex: 1;"></select>
+                <span>vs</span>
+                <select id="awayTeamSelect" style="flex: 1;"></select>
+            </div>
+            <input type="text" id="matchRoundInput" placeholder="Phase (ex: Demi-finale, Finale)">
+            <button id="createMatchBtn">Créer le match</button>
+        </div>
+
+        <!-- Matchs et scores -->
+        <div class="card">
+            <h2>📊 Matchs & Scores</h2>
+            <div id="matchesList"></div>
+        </div>
+
+        <!-- Joueur du jour -->
+        <div class="card">
+            <h2>⭐ Joueur du Jour</h2>
+            <input type="text" id="playerNameInput" placeholder="Nom du joueur">
+            <textarea id="playerDescInput" rows="3" placeholder="Description du joueur" style="border-radius: 20px; padding: 10px; width: 100%;"></textarea>
+            <button id="updatePlayerBtn">Mettre à jour</button>
+            <input type="file" id="playerImageInput" accept="image/*">
+            <button id="uploadImageBtn">Téléverser une photo</button>
+        </div>
+    </div>
+
+    <script>
+        // Load all data
+        async function loadTeams() {
+            const res = await fetch('/api/teams');
+            const teams = await res.json();
+            
+            // Display teams list
+            const teamsDiv = document.getElementById('teamsList');
+            if (teams.length === 0) {
+                teamsDiv.innerHTML = '<p>Aucune équipe pour le moment</p>';
+            } else {
+                teamsDiv.innerHTML = teams.map(team => `
+                    <div class="team-item">
+                        <span>ⵣ ${team.name}</span>
+                        <button class="delete-btn" onclick="deleteTeam(${team.id})">🗑️ Supprimer</button>
+                    </div>
+                `).join('');
+            }
+            
+            // Update selects for match creation
+            const homeSelect = document.getElementById('homeTeamSelect');
+            const awaySelect = document.getElementById('awayTeamSelect');
+            homeSelect.innerHTML = teams.map(team => `<option value="${team.id}">${team.name}</option>`).join('');
+            awaySelect.innerHTML = teams.map(team => `<option value="${team.id}">${team.name}</option>`).join('');
+        }
+        
+        async function loadMatches() {
+            const res = await fetch('/api/matches');
+            const matches = await res.json();
+            
+            const matchesDiv = document.getElementById('matchesList');
+            if (matches.length === 0) {
+                matchesDiv.innerHTML = '<p>Aucun match créé</p>';
+            } else {
+                matchesDiv.innerHTML = matches.map(match => `
+                    <div class="match-item">
+                        <div><strong>${match.round || 'Phase de groupes'}</strong></div>
+                        <div>${match.home_name} vs ${match.away_name}</div>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <input type="number" id="score_home_${match.id}" value="${match.home_score}" placeholder="Score domicile" style="width: 100px;">
+                            <span>-</span>
+                            <input type="number" id="score_away_${match.id}" value="${match.away_score}" placeholder="Score extérieur" style="width: 100px;">
+                            <button onclick="saveScore(${match.id})">💾 Enregistrer</button>
+                            <button class="delete-btn" onclick="deleteMatch(${match.id})">🗑️ Supprimer</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+        
+        async function loadPlayer() {
+            const res = await fetch('/api/player-of-day');
+            const player = await res.json();
+            document.getElementById('playerNameInput').value = player.player_name || '';
+            document.getElementById('playerDescInput').value = player.description || '';
+        }
+        
+        // Actions
+        window.deleteTeam = async (id) => {
+            if (confirm('Supprimer cette équipe ?')) {
+                await fetch(`/api/teams/${id}`, { method: 'DELETE' });
+                loadTeams();
+                loadMatches();
+            }
+        };
+        
+        window.saveScore = async (id) => {
+            const homeScore = parseInt(document.getElementById(`score_home_${id}`).value) || 0;
+            const awayScore = parseInt(document.getElementById(`score_away_${id}`).value) || 0;
+            await fetch(`/api/matches/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ home_score: homeScore, away_score: awayScore, played: true })
+            });
+            loadMatches();
+        };
+        
+        window.deleteMatch = async (id) => {
+            if (confirm('Supprimer ce match ?')) {
+                await fetch(`/api/matches/${id}`, { method: 'DELETE' });
+                loadMatches();
+            }
+        };
+        
+        // Event listeners
+        document.getElementById('addTeamBtn').onclick = async () => {
+            const name = document.getElementById('newTeamName').value.trim();
+            if (!name) return alert('Entrez un nom d\'équipe');
+            await fetch('/api/teams', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name })
+            });
+            document.getElementById('newTeamName').value = '';
+            loadTeams();
+            loadMatches();
+        };
+        
+        document.getElementById('createMatchBtn').onclick = async () => {
+            const homeId = document.getElementById('homeTeamSelect').value;
+            const awayId = document.getElementById('awayTeamSelect').value;
+            const round = document.getElementById('matchRoundInput').value;
+            if (homeId === awayId) return alert('Les deux équipes doivent être différentes');
+            await fetch('/api/matches', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ home_team_id: homeId, away_team_id: awayId, round })
+            });
+            document.getElementById('matchRoundInput').value = '';
+            loadMatches();
+        };
+        
+        document.getElementById('updatePlayerBtn').onclick = async () => {
+            const name = document.getElementById('playerNameInput').value;
+            const desc = document.getElementById('playerDescInput').value;
+            await fetch('/api/player-of-day', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ player_name: name, description: desc })
+            });
+            alert('Joueur mis à jour !');
+        };
+        
+        document.getElementById('uploadImageBtn').onclick = async () => {
+            const file = document.getElementById('playerImageInput').files[0];
+            if (!file) return alert('Sélectionnez une image');
+            const formData = new FormData();
+            formData.append('image', file);
+            await fetch('/api/upload-player-image', { method: 'POST', body: formData });
+            alert('Image téléversée !');
+        };
+        
+        document.getElementById('logoutBtn').onclick = async () => {
+            await fetch('/api/logout', { method: 'POST' });
+            window.location.href = '/';
+        };
+        
+        // Initial load
+        loadTeams();
+        loadMatches();
+        loadPlayer();
+    </script>
+</body>
+</html>
